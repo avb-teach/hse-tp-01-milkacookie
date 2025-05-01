@@ -1,17 +1,14 @@
 #!/bin/bash
 
-# Проверка количества аргументов
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <input_dir> <output_dir>"
     exit 1
 fi
 
 input_dir="$1"
 output_dir="$2"
 
-# Проверка существования входной директории
 if [ ! -d "$input_dir" ]; then
-    echo "Error: Input directory '$input_dir' does not exist."
+    echo ": Ошибка! Входная директория '$input_dir' не существует."
     exit 1
 fi
 mkdir -p "$output_dir"
@@ -25,8 +22,7 @@ process_file() {
         local suffix="${file_counts["$filename"]}"
         local base="${filename%.*}"
         local ext="${filename##*.}"
-        
-        # Обработка файлов без расширения
+
         if [[ "$base" == "$ext" ]]; then
             new_filename="${base}${suffix}"
         else
@@ -46,4 +42,4 @@ export file_counts
 
 find "$input_dir" -type f -exec bash -c 'process_file "$0"' {} \;
 
-echo "Files copied successfully to $output_dir"
+echo "Файлы скопированы успешно в $output_dir ю."
