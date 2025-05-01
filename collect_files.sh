@@ -1,45 +1,49 @@
 #!/bin/bash
+
+# Проверка количества аргументов
 if [ "$#" -ne 2 ]; then
-    echo "Ошибка! Необходимо указать 2 аргумента - входную и выходную директории" >&2
-    echo "Использование: $0 <входная_директория> <выходная_директория>" >&2
+    echo "Usage: $0 <input_dir> <output_dir>"
     exit 1
 fi
+
 input_dir="$1"
 output_dir="$2"
+
+# Проверка существования входной директории
 if [ ! -d "$input_dir" ]; then
-    echo "Ошибка! Входная директория не существует: $input_dir" >&2
+    echo "Error: Input directory '$input_dir' does not exist."
     exit 1
 fi
-
-# Создание выходной директории
 mkdir -p "$output_dir"
+declare -A file_counts
 
-generate_unique_name() {
-    local path="$1"
-    local filename=$(basename "$path")
-    local name="${filename%.*}"
-    local ext="${filename##*.}"
-    local counter=1
-    local new_name="$filename"
+process_file() {
+    local src_file="$1"
+    local filename=$(basename "$src_file")
+    if [[ -e "$output_dir/$filename" ]]; then
+        ((file_counts["$filename"]++))
+        local suffix="${file_counts["$filename"]}"
+        local base="${filename%.*}"
+        local ext="${filename##*.}"
+        
+        # Обработка файлов без расширения
+        if [[ "$base" == "$ext" ]]; then
+            new_filename="${base}${suffix}"
+        else
+            new_filename="${base}${suffix}.${ext}"
+        fi
 
-    if [ "$name" == "$ext" ]; then
-        ext=""
+        cp "$src_file" "$output_dir/$new_filename"
     else
-        ext=".$ext"
+        cp "$src_file" "$output_dir/$filename"
+        file_counts["$filename"]=0
     fi
-
-    while [ -e "$output_dir/$new_name" ]; do
-        new_name="${name}_${counter}${ext}"
-        ((counter++))
-    done
-    echo "$new_name"
 }
 
-find "$input_dir" -type f | while read -r file; do
-    unique_name=$(generate_unique_name "$file")
-    cp "$file" "$output_dir/$unique_name"
-    echo "Скопирован: $file -> $output_dir/$unique_name"
-done
+export -f process_file
+export output_dir
+export file_counts
 
-echo "Готово! Все файлы скопированы в: $output_dir"
-exit 0
+find "$input_dir" -type f -exec bash -c 'process_file "$0"' {} \;
+
+echo "Files copied successfully to $output_dir"
