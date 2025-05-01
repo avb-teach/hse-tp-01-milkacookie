@@ -6,7 +6,6 @@ if [ "$#" -ne 2 ]; then
 fi
 input_dir="$1"
 output_dir="$2"
-
 if [ ! -d "$input_dir" ]; then
     echo "Ошибка: Входная директория не существует: $input_dir"
     exit 1
